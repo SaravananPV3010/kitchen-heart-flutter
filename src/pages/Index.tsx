@@ -7,7 +7,7 @@ import MenuSection from '@/components/MenuSection';
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Navbar activeTab="Home" />
       <main>
         <HeroSection />
         <TodaysSpecial />
