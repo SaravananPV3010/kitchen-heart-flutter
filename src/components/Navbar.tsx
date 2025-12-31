@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Home, LayoutGrid, ClipboardList, UtensilsCrossed, ShoppingCart, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import UserProfileSheet from './UserProfileSheet';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -23,6 +25,7 @@ interface NavbarProps {
 }
 
 const Navbar = ({ activeTab }: NavbarProps) => {
+  const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -52,7 +55,10 @@ const Navbar = ({ activeTab }: NavbarProps) => {
           </nav>
 
           {/* Profile Icon */}
-          <button className="p-2 rounded-full hover:bg-muted transition-colors">
+          <button 
+            onClick={() => setProfileOpen(true)}
+            className="p-2 rounded-full hover:bg-muted transition-colors"
+          >
             <User size={24} className="text-muted-foreground" />
           </button>
         </div>
@@ -66,6 +72,9 @@ const Navbar = ({ activeTab }: NavbarProps) => {
           <NavItem icon={<ShoppingCart size={20} strokeWidth={2} />} label="Cart" to="/cart" isActive={getIsActive('/cart', 'Cart')} />
         </nav>
       </div>
+
+      {/* User Profile Sheet */}
+      <UserProfileSheet open={profileOpen} onOpenChange={setProfileOpen} />
     </header>
   );
 };
