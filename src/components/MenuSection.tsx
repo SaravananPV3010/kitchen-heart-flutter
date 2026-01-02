@@ -16,47 +16,53 @@ const menuItems = [
     price: 50.00,
     rating: 4.5,
     reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight."
+    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight.",
+    isVeg: true
   },
   {
     image: thali,
     name: "Idly Sambar",
-    price: 70.00,
-    rating: 4.8,
+    price: 50.00,
+    rating: 4.5,
     reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian recipe."
+    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian recipe.",
+    isVeg: true
   },
   {
     image: dosa,
     name: "Idly Sambar",
-    price: 85.00,
+    price: 50.00,
     rating: 4.5,
     reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight."
+    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight.",
+    isVeg: true
   },
   {
     image: idlySambar,
     name: "Idly Sambar",
     price: 50.00,
     rating: 4.5,
-    reviewCount: 256,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight."
-  },
-  {
-    image: dosa,
-    name: "Idly Sambar",
-    price: 70.00,
-    rating: 4.8,
-    reviewCount: 276,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian recipe."
+    reviewCount: 234,
+    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight.",
+    isVeg: false
   },
   {
     image: thali,
     name: "Idly Sambar",
-    price: 55.00,
+    price: 50.00,
     rating: 4.5,
-    reviewCount: 256,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight."
+    reviewCount: 234,
+    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian recipe.",
+    isVeg: true
+  },
+  {
+    image: dosa,
+    name: "Idly Sambar",
+    price: 50.00,
+    rating: 4.5,
+    reviewCount: 234,
+    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight.",
+    isVeg: false
   },
 ];
 
@@ -66,15 +72,15 @@ const MenuSection = ({ title }: MenuSectionProps) => {
 
   return (
     <section className="py-6">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="section-title">{title}</h3>
-          <button className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            All Items →
+      <div className="container mx-auto px-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          <button className="text-xs text-muted-foreground hover:text-primary transition-colors">
+            View more &gt;
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedItems.map((item, index) => (
             <FoodCard 
               key={index}
@@ -83,13 +89,13 @@ const MenuSection = ({ title }: MenuSectionProps) => {
           ))}
         </div>
 
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-6">
           <Button 
             variant="outline" 
             onClick={() => setShowAll(!showAll)}
-            className="border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-foreground"
+            className="border-muted-foreground/40 text-muted-foreground hover:text-foreground hover:border-foreground text-sm px-6"
           >
-            {showAll ? 'Show Less' : 'View Menu ↓'}
+            {showAll ? 'Show Less ↑' : 'More Items ↓'}
           </Button>
         </div>
       </div>

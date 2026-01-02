@@ -16,15 +16,6 @@ const Index = () => {
         <MenuSection title="Lunch Menu" />
         <MenuSection title="Dinner Menu" />
       </main>
-      
-      {/* Footer */}
-      <footer className="py-8 border-t border-border mt-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            © 2024 Cibeey. All rights reserved.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 };
