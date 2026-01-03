@@ -1,6 +1,8 @@
 import Navbar from '@/components/Navbar';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import stampPaid from '@/assets/stamp-paid.png';
+import stampDelivered from '@/assets/stamp-delivered.png';
 
 interface OrderItem {
   sNo: number;
@@ -162,23 +164,11 @@ const OrderCard = ({ order }: { order: Order }) => {
           {/* Stamp Overlay */}
           {(showPaidStamp || showDeliveredStamp) && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <div 
-                className={`w-32 h-32 rounded-full border-4 flex items-center justify-center transform rotate-[-15deg] ${
-                  showPaidStamp ? 'border-green-600 bg-green-600/10' : 'border-primary bg-primary/10'
-                }`}
-              >
-                <div className="text-center">
-                  <div className={`text-xs font-bold ${showPaidStamp ? 'text-green-600' : 'text-primary'}`}>
-                    THANK YOU
-                  </div>
-                  <div className={`text-2xl font-black ${showPaidStamp ? 'text-green-600' : 'text-primary'}`}>
-                    {showPaidStamp ? 'PAID' : 'DELIVERED'}
-                  </div>
-                  <div className={`text-xs font-bold ${showPaidStamp ? 'text-green-600' : 'text-primary'}`}>
-                    THANK YOU
-                  </div>
-                </div>
-              </div>
+              <img 
+                src={showPaidStamp ? stampPaid : stampDelivered}
+                alt={showPaidStamp ? 'Paid' : 'Delivered'}
+                className="w-32 h-32 object-contain transform rotate-[-15deg] opacity-90"
+              />
             </div>
           )}
 
