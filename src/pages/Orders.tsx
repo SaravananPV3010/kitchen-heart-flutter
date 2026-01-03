@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import Navbar from '@/components/Navbar';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import stampPaid from '@/assets/stamp-paid.png';
 import stampDelivered from '@/assets/stamp-delivered.png';
 
@@ -18,7 +20,7 @@ interface Order {
   dateTime: string;
   type: 'status' | 'invoice';
   status: 'in-progress' | 'delivered' | 'paid';
-  progressStep: number; // 0: Placed, 1: Prepared, 2: Picked up, 3: On The Way, 4: Delivered
+  progressStep: number;
   items: OrderItem[];
   total: number;
   deliveryCharge: number;
@@ -33,32 +35,30 @@ const sampleOrders: Order[] = [
     status: 'in-progress',
     progressStep: 2,
     items: [
-      { sNo: 1, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 3, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 4, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 5, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
+      { sNo: 1, name: 'Idly', quantity: 2, price: 50.00, isVeg: true, status: 'Served' },
+      { sNo: 2, name: 'Dosa', quantity: 1, price: 70.00, isVeg: true, status: 'Served' },
+      { sNo: 3, name: 'Vada', quantity: 3, price: 40.00, isVeg: true, status: 'In-Queue' },
+      { sNo: 4, name: 'Pongal', quantity: 1, price: 60.00, isVeg: true, status: 'In-Queue' },
+      { sNo: 5, name: 'Upma', quantity: 2, price: 45.00, isVeg: true, status: 'In-Queue' },
     ],
-    total: 1000.00,
+    total: 495.00,
     deliveryCharge: 10.00,
-    serviceTax: 45.00,
+    serviceTax: 24.75,
   },
   {
     id: '2',
-    dateTime: '01/07/20 10:30 PM',
+    dateTime: '01/07/20 10:30 AM',
     type: 'status',
     status: 'delivered',
     progressStep: 4,
     items: [
-      { sNo: 1, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 3, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 4, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 5, name: 'Idly', quantity: 0, price: 50.00, isVeg: true, status: 'Served' },
+      { sNo: 1, name: 'Masala Dosa', quantity: 2, price: 80.00, isVeg: true, status: 'Served' },
+      { sNo: 2, name: 'Filter Coffee', quantity: 2, price: 30.00, isVeg: true, status: 'Served' },
+      { sNo: 3, name: 'Kesari Bath', quantity: 1, price: 50.00, isVeg: true, status: 'Served' },
     ],
-    total: 1000.00,
+    total: 270.00,
     deliveryCharge: 10.00,
-    serviceTax: 45.00,
+    serviceTax: 13.50,
   },
   {
     id: '3',
@@ -67,72 +67,88 @@ const sampleOrders: Order[] = [
     status: 'in-progress',
     progressStep: 4,
     items: [
-      { sNo: 1, name: 'Dosa', quantity: 1, price: 50, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Dosa', quantity: 1, price: 50, isVeg: true, status: 'In-Queue' },
-      { sNo: 3, name: 'Dosa', quantity: 1, price: 50, isVeg: true, status: 'Served' },
-      { sNo: 4, name: 'Dosa', quantity: 1, price: 50, isVeg: true, status: 'In-Queue' },
-      { sNo: 5, name: 'Dosa', quantity: 1, price: 50, isVeg: true, status: 'In-Queue' },
-      { sNo: 6, name: 'Dosa', quantity: 1, price: 50, isVeg: true, status: 'Served' },
+      { sNo: 1, name: 'Rava Idly', quantity: 4, price: 60.00, isVeg: true, status: 'Served' },
+      { sNo: 2, name: 'Sambar Vada', quantity: 2, price: 55.00, isVeg: true, status: 'In-Queue' },
+      { sNo: 3, name: 'Puri Bhaji', quantity: 1, price: 65.00, isVeg: true, status: 'Served' },
+      { sNo: 4, name: 'Badam Milk', quantity: 2, price: 45.00, isVeg: true, status: 'In-Queue' },
     ],
-    total: 1000.00,
+    total: 465.00,
     deliveryCharge: 10.00,
-    serviceTax: 45.00,
+    serviceTax: 23.25,
   },
   {
     id: '4',
-    dateTime: '01/07/20 8:30 PM',
+    dateTime: '30/06/20 8:30 PM',
     type: 'invoice',
     status: 'paid',
     progressStep: 4,
     items: [
-      { sNo: 1, name: 'Dosa', quantity: 0, price: 50, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Dosa', quantity: 0, price: 50, isVeg: true, status: 'Served' },
-      { sNo: 3, name: 'Dosa', quantity: 0, price: 50, isVeg: true, status: 'Served' },
-      { sNo: 4, name: 'Dosa', quantity: 0, price: 50, isVeg: true, status: 'Served' },
-      { sNo: 5, name: 'Dosa', quantity: 0, price: 50, isVeg: true, status: 'Served' },
-      { sNo: 6, name: 'Dosa', quantity: 1, price: 50, isVeg: true, status: 'Served' },
+      { sNo: 1, name: 'Thali Special', quantity: 2, price: 150.00, isVeg: true, status: 'Served' },
+      { sNo: 2, name: 'Butter Naan', quantity: 4, price: 35.00, isVeg: true, status: 'Served' },
+      { sNo: 3, name: 'Paneer Butter Masala', quantity: 1, price: 180.00, isVeg: true, status: 'Served' },
+      { sNo: 4, name: 'Gulab Jamun', quantity: 4, price: 30.00, isVeg: true, status: 'Served' },
     ],
-    total: 1000.00,
+    total: 740.00,
     deliveryCharge: 10.00,
-    serviceTax: 45.00,
+    serviceTax: 37.00,
   },
 ];
 
-const ProgressTracker = ({ step, type }: { step: number; type: 'status' | 'invoice' }) => {
-  if (type === 'invoice') return null;
+const timelineSteps = [
+  { id: 0, label: 'Placed' },
+  { id: 1, label: 'Prepared' },
+  { id: 2, label: 'Picked up' },
+  { id: 3, label: 'On The Way' },
+  { id: 4, label: 'Delivered' },
+];
 
-  const steps = ['Placed', 'Prepared', 'Picked up', 'On The Way', 'Delivered'];
-
+const ProgressTimeline = ({ step }: { step: number }) => {
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-muted-foreground">Prepared</span>
-        <span className="text-sm text-muted-foreground">On The Way</span>
-      </div>
-      <div className="relative">
-        <div className="h-1 bg-muted rounded-full">
-          <div 
-            className="h-1 bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${(step / 4) * 100}%` }}
-          />
-        </div>
-        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-3 h-3 rounded-full bg-primary border-2 border-primary" />
-        <div className={`absolute top-1/2 -translate-y-1/2 left-1/4 w-3 h-3 rounded-full ${step >= 1 ? 'bg-primary border-primary' : 'bg-background border-muted-foreground'} border-2`} />
-        <div className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full ${step >= 2 ? 'bg-primary border-primary' : 'bg-background border-muted-foreground'} border-2`} />
-        <div className={`absolute top-1/2 -translate-y-1/2 left-3/4 w-3 h-3 rounded-full ${step >= 3 ? 'bg-primary border-primary' : 'bg-background border-muted-foreground'} border-2`} />
-        <div className={`absolute top-1/2 -translate-y-1/2 right-0 w-3 h-3 rounded-full ${step >= 4 ? 'bg-primary border-primary' : 'bg-background border-muted-foreground'} border-2`} />
-      </div>
-      <div className="flex items-center justify-between mt-2">
-        <span className="text-sm text-muted-foreground">Placed</span>
-        <span className="text-sm text-muted-foreground">Picked up</span>
-        <span className="text-sm text-muted-foreground">Delivered</span>
+    <div className="mb-8 px-4">
+      <div className="relative flex items-center justify-between">
+        {/* Progress Line Background */}
+        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-muted rounded-full" />
+        
+        {/* Progress Line Filled */}
+        <div 
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500"
+          style={{ width: `${(step / 4) * 100}%` }}
+        />
+        
+        {/* Timeline Steps */}
+        {timelineSteps.map((s, index) => (
+          <div key={s.id} className="relative z-10 flex flex-col items-center">
+            <div 
+              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                step >= index 
+                  ? 'bg-primary border-primary text-primary-foreground' 
+                  : 'bg-background border-muted-foreground/50 text-muted-foreground'
+              }`}
+            >
+              {step > index ? (
+                <Check size={16} className="text-primary-foreground" />
+              ) : (
+                <span className="text-xs font-semibold">{index + 1}</span>
+              )}
+            </div>
+            <span className={`mt-2 text-xs font-medium ${
+              step >= index ? 'text-foreground' : 'text-muted-foreground'
+            }`}>
+              {s.label}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
 };
 
 const StatusBadge = ({ status }: { status: 'Served' | 'In-Queue' }) => (
-  <span className={`text-sm font-medium ${status === 'Served' ? 'text-green-600' : 'text-primary'}`}>
+  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+    status === 'Served' 
+      ? 'bg-green-100 text-green-700' 
+      : 'bg-amber-100 text-amber-700'
+  }`}>
     {status}
   </span>
 );
@@ -143,72 +159,74 @@ const OrderCard = ({ order }: { order: Order }) => {
   const totalCost = order.total + order.deliveryCharge + order.serviceTax;
 
   return (
-    <div className="bg-background border border-border rounded-lg shadow-sm mb-6 overflow-hidden">
+    <div className="bg-background border border-border rounded-2xl shadow-sm mb-6 overflow-hidden">
       {/* Date/Time Header */}
-      <div className="px-4 py-2 text-xs text-muted-foreground bg-muted/50">
+      <div className="px-6 py-3 text-sm text-muted-foreground bg-muted/30 border-b border-border/50">
         {order.dateTime}
       </div>
 
       {/* Order Content */}
       <div className="p-6 relative">
         {/* Title */}
-        <h3 className="text-xl font-semibold text-center mb-6">
+        <h3 className="text-xl font-bold text-center mb-6 text-foreground">
           {order.type === 'invoice' ? 'Invoice' : 'Order Status'}
         </h3>
 
-        {/* Progress Tracker */}
-        <ProgressTracker step={order.progressStep} type={order.type} />
+        {/* Progress Timeline - Only for status type */}
+        {order.type === 'status' && (
+          <ProgressTimeline step={order.progressStep} />
+        )}
 
         {/* Items Table */}
-        <div className="relative overflow-x-auto">
+        <div className="relative overflow-hidden rounded-lg border border-border">
           {/* Stamp Overlay */}
           {(showPaidStamp || showDeliveredStamp) && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
               <img 
                 src={showPaidStamp ? stampPaid : stampDelivered}
                 alt={showPaidStamp ? 'Paid' : 'Delivered'}
-                className="w-44 h-44 object-contain transform rotate-[-20deg] opacity-90"
+                className="w-40 h-40 object-contain transform rotate-[-20deg] opacity-80"
               />
             </div>
           )}
 
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-2 text-sm font-semibold text-foreground">S.No</th>
-                <th className="text-left py-3 px-2 text-sm font-semibold text-foreground">Items</th>
-                <th className="text-center py-3 px-2 text-sm font-semibold text-foreground">Quantity</th>
-                <th className="text-right py-3 px-2 text-sm font-semibold text-foreground">Price</th>
-                <th className="text-right py-3 px-2 text-sm font-semibold text-foreground">Status</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow className="border-border">
+                <TableHead className="text-foreground font-semibold w-16">S.No</TableHead>
+                <TableHead className="text-foreground font-semibold">Items</TableHead>
+                <TableHead className="text-foreground font-semibold text-center w-24">Qty</TableHead>
+                <TableHead className="text-foreground font-semibold text-right w-24">Price</TableHead>
+                <TableHead className="text-foreground font-semibold text-right w-28">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {order.items.map((item) => (
-                <tr key={item.sNo} className="border-b border-border/50">
-                  <td className="py-3 px-2 text-sm text-muted-foreground">{item.sNo}</td>
-                  <td className="py-3 px-2">
+                <TableRow key={item.sNo} className="border-border/50">
+                  <TableCell className="text-muted-foreground font-medium">{item.sNo}</TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 border-2 ${item.isVeg ? 'border-green-600' : 'border-red-600'}`}>
-                        <span className={`block w-1.5 h-1.5 m-0.5 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
-                      </span>
-                      <span className="text-sm text-foreground">{item.name}</span>
+                      <div className={`w-4 h-4 border-2 ${item.isVeg ? 'border-green-600' : 'border-red-600'} rounded-sm flex items-center justify-center`}>
+                        <div className={`w-2 h-2 ${item.isVeg ? 'bg-green-600' : 'bg-red-600'} rounded-full`} />
+                      </div>
+                      <span className="text-foreground font-medium">{item.name}</span>
                     </div>
-                  </td>
-                  <td className="py-3 px-2 text-center text-sm text-muted-foreground">{item.quantity}</td>
-                  <td className="py-3 px-2 text-right text-sm text-foreground">₹{item.price.toFixed(2)}</td>
-                  <td className="py-3 px-2 text-right">
+                  </TableCell>
+                  <TableCell className="text-center text-muted-foreground">{item.quantity}</TableCell>
+                  <TableCell className="text-right text-foreground font-medium">₹{item.price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
                     <StatusBadge status={item.status} />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
 
         {/* Pricing Summary */}
         <div className="mt-6 pt-4 border-t border-border space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Total</span>
+            <span className="text-muted-foreground">Subtotal</span>
             <span className="font-semibold text-foreground">₹{order.total.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
@@ -219,16 +237,17 @@ const OrderCard = ({ order }: { order: Order }) => {
             <span className="text-muted-foreground">Service Tax / GST</span>
             <span className="font-semibold text-primary">₹{order.serviceTax.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-sm pt-2 border-t border-border">
-            <span className="font-semibold text-foreground">Total Cost</span>
-            <span className="font-bold text-primary">₹{totalCost.toFixed(2)}</span>
+          <div className="flex justify-between text-base pt-3 border-t border-border mt-3">
+            <span className="font-bold text-foreground">Total Cost</span>
+            <span className="font-bold text-primary text-lg">₹{totalCost.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Invoice Button */}
         <div className="mt-6 flex justify-center">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8">
-            Invoice <Download className="ml-2 h-4 w-4" />
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-full shadow-md">
+            <Download className="mr-2 h-4 w-4" />
+            Download Invoice
           </Button>
         </div>
       </div>
@@ -237,22 +256,26 @@ const OrderCard = ({ order }: { order: Order }) => {
 };
 
 const Orders = () => {
+  const [dateFilter, setDateFilter] = useState('Today');
+
   return (
     <div className="min-h-screen bg-muted/30">
       <Navbar />
 
       {/* Date Navigation */}
-      <div className="bg-background border-b border-border">
-        <div className="container mx-auto px-4 py-3">
+      <div className="bg-background border-b border-border shadow-sm">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center gap-4">
-            <button className="p-1 hover:bg-muted rounded transition-colors">
+            <button className="p-2 hover:bg-muted rounded-full transition-colors">
               <ChevronLeft className="h-5 w-5 text-muted-foreground" />
             </button>
-            <span className="text-sm font-medium text-foreground">Today</span>
-            <button className="p-1 hover:bg-muted rounded transition-colors">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-semibold text-foreground">{dateFilter}</span>
+              <span className="text-sm text-muted-foreground px-3 py-1 bg-muted rounded-full">in Week</span>
+            </div>
+            <button className="p-2 hover:bg-muted rounded-full transition-colors">
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
-            <span className="text-sm text-muted-foreground ml-4">in Week</span>
           </div>
         </div>
       </div>
