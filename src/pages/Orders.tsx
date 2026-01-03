@@ -167,7 +167,7 @@ const OrderCard = ({ order }: { order: Order }) => {
               <img 
                 src={showPaidStamp ? stampPaid : stampDelivered}
                 alt={showPaidStamp ? 'Paid' : 'Delivered'}
-                className="w-32 h-32 object-contain transform rotate-[-15deg] opacity-90"
+                className="w-44 h-44 object-contain transform rotate-[-20deg] opacity-90"
               />
             </div>
           )}
