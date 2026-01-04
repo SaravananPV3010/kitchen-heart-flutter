@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,14 +9,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  isVeg: boolean;
-}
+import { useCart } from '@/contexts/CartContext';
 
 const checkoutSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
@@ -34,13 +26,7 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 const Cart = () => {
   const { toast } = useToast();
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    { id: 1, name: 'Idly', price: 50.00, quantity: 2, isVeg: true },
-    { id: 2, name: 'Dosa', price: 70.00, quantity: 1, isVeg: true },
-    { id: 3, name: 'Vada', price: 40.00, quantity: 3, isVeg: true },
-    { id: 4, name: 'Pongal', price: 60.00, quantity: 1, isVeg: true },
-    { id: 5, name: 'Upma', price: 45.00, quantity: 2, isVeg: true },
-  ]);
+  const { items, updateQuantity, removeItem, subtotal, clearCart } = useCart();
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -56,27 +42,12 @@ const Cart = () => {
     },
   });
 
-  const updateQuantity = (id: number, delta: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(0, item.quantity + delta) }
-          : item
-      ).filter(item => item.quantity > 0)
-    );
-  };
-
-  const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryCharge = cartItems.length > 0 ? 10.00 : 0;
+  const deliveryCharge = items.length > 0 ? 10.00 : 0;
   const serviceTax = subtotal * 0.05;
   const totalCost = subtotal + deliveryCharge + serviceTax;
 
   const onSubmit = (data: CheckoutFormData) => {
-    if (cartItems.length === 0) {
+    if (items.length === 0) {
       toast({
         title: 'Cart is empty',
         description: 'Please add items to your cart before placing an order.',
@@ -89,6 +60,9 @@ const Cart = () => {
       title: 'Order Placed!',
       description: `Thank you ${data.name}! Your order of ₹${totalCost.toFixed(2)} has been placed.`,
     });
+    
+    clearCart();
+    form.reset();
   };
 
   return (
@@ -278,7 +252,7 @@ const Cart = () => {
               <div className="bg-background rounded-2xl p-8 shadow-sm border border-border">
                 <h2 className="text-xl font-semibold text-foreground mb-6">Your Order</h2>
                 
-                {cartItems.length === 0 ? (
+                {items.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     Your cart is empty
                   </div>
@@ -286,7 +260,7 @@ const Cart = () => {
                   <>
                     {/* Cart Items List */}
                     <div className="space-y-4 mb-6">
-                      {cartItems.map((item) => (
+                      {items.map((item) => (
                         <div key={item.id} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
                           <div className="flex items-center gap-3">
                             {/* Veg Indicator */}
@@ -303,7 +277,7 @@ const Cart = () => {
                             <div className="flex items-center bg-muted/50 rounded-lg overflow-hidden border border-border">
                               <button 
                                 type="button"
-                                onClick={() => updateQuantity(item.id, -1)}
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
                                 className="px-3 py-2 text-foreground hover:bg-muted transition-colors"
                               >
                                 <Minus size={14} />
@@ -311,7 +285,7 @@ const Cart = () => {
                               <span className="px-4 py-2 text-foreground font-medium min-w-[40px] text-center">{item.quantity}</span>
                               <button 
                                 type="button"
-                                onClick={() => updateQuantity(item.id, 1)}
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
                                 className="px-3 py-2 text-foreground hover:bg-muted transition-colors"
                               >
                                 <Plus size={14} />
@@ -365,7 +339,7 @@ const Cart = () => {
                 <div className="flex justify-center">
                   <Button 
                     type="submit"
-                    disabled={cartItems.length === 0}
+                    disabled={items.length === 0}
                     className="bg-primary text-primary-foreground px-12 py-6 rounded-full font-semibold text-base hover:bg-primary/90 transition-colors shadow-lg disabled:opacity-50"
                   >
                     Place Order
