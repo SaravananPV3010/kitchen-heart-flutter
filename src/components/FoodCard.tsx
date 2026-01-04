@@ -1,7 +1,8 @@
 import { Star, Plus, Minus } from 'lucide-react';
-import { useState } from 'react';
+import { useCart } from '@/contexts/CartContext';
 
 interface FoodCardProps {
+  id: string;
   image: string;
   name: string;
   price: number;
@@ -11,8 +12,18 @@ interface FoodCardProps {
   isVeg?: boolean;
 }
 
-const FoodCard = ({ image, name, price, rating, reviewCount, description, isVeg = true }: FoodCardProps) => {
-  const [quantity, setQuantity] = useState(0);
+const FoodCard = ({ id, image, name, price, rating, reviewCount, description, isVeg = true }: FoodCardProps) => {
+  const { items, addItem, updateQuantity } = useCart();
+  const cartItem = items.find(item => item.id === id);
+  const quantity = cartItem?.quantity || 0;
+
+  const handleAdd = () => {
+    addItem({ id, name, price, isVeg, image });
+  };
+
+  const handleUpdateQuantity = (delta: number) => {
+    updateQuantity(id, quantity + delta);
+  };
 
   return (
     <div className="bg-card rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -54,7 +65,7 @@ const FoodCard = ({ image, name, price, rating, reviewCount, description, isVeg 
         {quantity > 0 ? (
           <div className="flex items-center border border-border rounded overflow-hidden">
             <button 
-              onClick={() => setQuantity(q => Math.max(0, q - 1))}
+              onClick={() => handleUpdateQuantity(-1)}
               className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground"
             >
               <Minus size={12} />
@@ -63,7 +74,7 @@ const FoodCard = ({ image, name, price, rating, reviewCount, description, isVeg 
               {quantity}
             </span>
             <button 
-              onClick={() => setQuantity(q => q + 1)}
+              onClick={() => handleUpdateQuantity(1)}
               className="w-7 h-7 flex items-center justify-center hover:bg-muted transition-colors text-muted-foreground"
             >
               <Plus size={12} />
@@ -74,7 +85,7 @@ const FoodCard = ({ image, name, price, rating, reviewCount, description, isVeg 
         )}
         
         <button 
-          onClick={() => setQuantity(q => q + 1)}
+          onClick={handleAdd}
           className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-medium px-4 py-1.5 rounded transition-colors"
         >
           + ADD

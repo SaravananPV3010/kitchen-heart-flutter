@@ -11,6 +11,7 @@ interface MenuSectionProps {
 
 const menuItems = [
   {
+    id: 'idly-sambar-1',
     image: idlySambar,
     name: "Idly Sambar",
     price: 50.00,
@@ -20,48 +21,53 @@ const menuItems = [
     isVeg: true
   },
   {
+    id: 'thali-1',
     image: thali,
-    name: "Idly Sambar",
-    price: 50.00,
-    rating: 4.5,
-    reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian recipe.",
+    name: "South Indian Thali",
+    price: 120.00,
+    rating: 4.8,
+    reviewCount: 312,
+    description: "A complete South Indian meal with rice, sambar, rasam, kootu, poriyal, curd, papad, and pickle served on a traditional banana leaf.",
     isVeg: true
   },
   {
+    id: 'dosa-1',
     image: dosa,
-    name: "Idly Sambar",
-    price: 50.00,
-    rating: 4.5,
-    reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight.",
+    name: "Masala Dosa",
+    price: 70.00,
+    rating: 4.6,
+    reviewCount: 456,
+    description: "Crispy golden dosa filled with spiced potato masala, served with coconut chutney and sambar for an authentic South Indian breakfast.",
     isVeg: true
   },
   {
+    id: 'idly-sambar-2',
     image: idlySambar,
-    name: "Idly Sambar",
-    price: 50.00,
-    rating: 4.5,
-    reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight.",
-    isVeg: false
-  },
-  {
-    image: thali,
-    name: "Idly Sambar",
-    price: 50.00,
-    rating: 4.5,
-    reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian recipe.",
+    name: "Ghee Idly",
+    price: 60.00,
+    rating: 4.4,
+    reviewCount: 189,
+    description: "Soft idlies drizzled with aromatic ghee, served with sambar and a variety of chutneys for a rich, flavorful experience.",
     isVeg: true
   },
   {
+    id: 'thali-2',
+    image: thali,
+    name: "Special Thali",
+    price: 150.00,
+    rating: 4.9,
+    reviewCount: 278,
+    description: "Premium thali with additional items including sweet, special curry, and unlimited servings of rice and accompaniments.",
+    isVeg: true
+  },
+  {
+    id: 'dosa-2',
     image: dosa,
-    name: "Idly Sambar",
-    price: 50.00,
+    name: "Chicken Dosa",
+    price: 90.00,
     rating: 4.5,
-    reviewCount: 234,
-    description: "Soft and fluffy idlies served with flavorful sambar, complemented by coconut chutney and tangy tomato chutney for a perfect South Indian delight.",
+    reviewCount: 342,
+    description: "Crispy dosa topped with spiced minced chicken, onions, and herbs. A perfect fusion of South Indian and non-vegetarian flavors.",
     isVeg: false
   },
 ];
@@ -81,9 +87,9 @@ const MenuSection = ({ title }: MenuSectionProps) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayedItems.map((item, index) => (
+          {displayedItems.map((item) => (
             <FoodCard 
-              key={index}
+              key={item.id}
               {...item}
             />
           ))}

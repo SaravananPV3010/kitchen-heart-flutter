@@ -2,6 +2,9 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import OfferCard from "@/components/OfferCard";
+import CouponCard from "@/components/CouponCard";
+import { Sparkles, UtensilsCrossed } from "lucide-react";
 
 const Avail = () => {
   const [selectedDate, setSelectedDate] = useState(0);
@@ -21,32 +24,111 @@ const Avail = () => {
     { day: "THU", date: 20, month: "FEB" },
   ];
 
+  const offers = [
+    {
+      title: "Weekend Special",
+      description: "Get 25% off on all thali meals every Saturday and Sunday",
+      code: "WEEKEND25",
+      discount: "25% OFF",
+      validUntil: "Valid till Feb 28",
+      type: "percentage" as const,
+    },
+    {
+      title: "Buy 1 Get 1 Free",
+      description: "Order any dosa and get another one absolutely free",
+      code: "BOGO",
+      discount: "BOGO",
+      validUntil: "Valid till Feb 15",
+      type: "bogo" as const,
+    },
+    {
+      title: "First Order Discount",
+      description: "Flat ₹100 off on your first order with us",
+      code: "FIRST100",
+      discount: "₹100 OFF",
+      validUntil: "For new users",
+      type: "flat" as const,
+    },
+  ];
+
+  const coupons = [
+    {
+      code: "SAVE20",
+      discount: "20%",
+      minOrder: 300,
+      maxDiscount: 100,
+      description: "On orders above ₹300",
+    },
+    {
+      code: "FLAT50",
+      discount: "₹50",
+      minOrder: 200,
+      description: "Flat ₹50 off on orders above ₹200",
+    },
+    {
+      code: "LUNCH15",
+      discount: "15%",
+      minOrder: 250,
+      maxDiscount: 75,
+      description: "Valid 12PM - 3PM only",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-8">
       <Navbar activeTab="Avail" />
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Date Picker */}
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex gap-2 pb-4">
-            {dates.map((d, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedDate(index)}
-                className={`flex flex-col items-center min-w-[60px] px-3 py-2 rounded-lg transition-colors ${
-                  selectedDate === index
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-transparent text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <span className="text-xs font-medium">{d.day}</span>
-                <span className="text-xl font-bold">{d.date}</span>
-                <span className="text-xs">{d.month}</span>
-              </button>
+        {/* Offers Section */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Special Offers</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {offers.map((offer, index) => (
+              <OfferCard key={index} {...offer} />
             ))}
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        </section>
+
+        {/* Coupons Section */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <UtensilsCrossed className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Available Coupons</h2>
+          </div>
+          <div className="space-y-3">
+            {coupons.map((coupon, index) => (
+              <CouponCard key={index} {...coupon} />
+            ))}
+          </div>
+        </section>
+
+        {/* Date Picker */}
+        <section className="mb-6">
+          <h2 className="text-xl font-bold text-foreground mb-4">Reserve a Table</h2>
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-2 pb-4">
+              {dates.map((d, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedDate(index)}
+                  className={`flex flex-col items-center min-w-[60px] px-3 py-2 rounded-lg transition-colors ${
+                    selectedDate === index
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-transparent text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  <span className="text-xs font-medium">{d.day}</span>
+                  <span className="text-xl font-bold">{d.date}</span>
+                  <span className="text-xs">{d.month}</span>
+                </button>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </section>
 
         {/* Reserve Table Button */}
         <div className="flex justify-center my-6">
