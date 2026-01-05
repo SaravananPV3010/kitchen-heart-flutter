@@ -1,5 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { Minus, Plus, Trash2 } from 'lucide-react';
+import { Minus, Plus, Trash2, LogIn } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +11,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrders } from '@/hooks/useOrders';
 
 const checkoutSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
@@ -26,14 +29,17 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 const Cart = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { items, updateQuantity, removeItem, subtotal, clearCart } = useCart();
+  const { user, loading: authLoading } = useAuth();
+  const { createOrder, loading: orderLoading } = useOrders();
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       name: '',
       mobile: '',
-      email: '',
+      email: user?.email || '',
       address: '',
       landmark: '',
       cityState: '',
@@ -46,7 +52,7 @@ const Cart = () => {
   const serviceTax = subtotal * 0.05;
   const totalCost = subtotal + deliveryCharge + serviceTax;
 
-  const onSubmit = (data: CheckoutFormData) => {
+  const onSubmit = async (data: CheckoutFormData) => {
     if (items.length === 0) {
       toast({
         title: 'Cart is empty',
@@ -56,14 +62,71 @@ const Cart = () => {
       return;
     }
 
-    toast({
-      title: 'Order Placed!',
-      description: `Thank you ${data.name}! Your order of ₹${totalCost.toFixed(2)} has been placed.`,
+    if (!user) {
+      toast({
+        title: 'Please log in',
+        description: 'You need to be logged in to place an order.',
+        variant: 'destructive',
+      });
+      navigate('/auth');
+      return;
+    }
+
+    const orderData = {
+      name: data.name,
+      mobile: data.mobile,
+      email: data.email,
+      address: data.address,
+      landmark: data.landmark,
+      cityState: data.cityState,
+      pin: data.pin,
+      paymentMethod: data.paymentMethod,
+    };
+
+    const order = await createOrder(orderData, items, {
+      subtotal,
+      deliveryCharge,
+      serviceTax,
+      totalAmount: totalCost,
     });
-    
-    clearCart();
-    form.reset();
+
+    if (order) {
+      clearCart();
+      form.reset();
+      navigate('/orders');
+    }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <Navbar />
+        <main className="container mx-auto px-4 py-16 max-w-md text-center">
+          <div className="bg-card rounded-2xl p-8 shadow-sm border border-border">
+            <LogIn className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">Sign in to continue</h2>
+            <p className="text-muted-foreground mb-6">
+              Please log in to view your cart and place orders.
+            </p>
+            <Button
+              onClick={() => navigate('/auth')}
+              className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-medium"
+            >
+              Sign In
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -339,10 +402,10 @@ const Cart = () => {
                 <div className="flex justify-center">
                   <Button 
                     type="submit"
-                    disabled={items.length === 0}
+                    disabled={items.length === 0 || orderLoading}
                     className="bg-primary text-primary-foreground px-12 py-6 rounded-full font-semibold text-base hover:bg-primary/90 transition-colors shadow-lg disabled:opacity-50"
                   >
-                    Place Order
+                    {orderLoading ? 'Placing Order...' : 'Place Order'}
                   </Button>
                 </div>
               </div>
