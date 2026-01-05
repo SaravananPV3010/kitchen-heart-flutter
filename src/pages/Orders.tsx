@@ -1,180 +1,152 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { ChevronLeft, ChevronRight, Download, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, Package, Truck, Clock, ChefHat, LogIn, Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrders } from '@/hooks/useOrders';
 import stampPaid from '@/assets/stamp-paid.png';
 import stampDelivered from '@/assets/stamp-delivered.png';
 
+type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
+
 interface OrderItem {
-  sNo: number;
-  name: string;
+  id: string;
+  item_name: string;
+  item_price: number;
   quantity: number;
-  price: number;
-  status: 'Served' | 'In-Queue';
-  isVeg: boolean;
+  is_veg: boolean;
 }
 
 interface Order {
   id: string;
-  dateTime: string;
-  type: 'status' | 'invoice';
-  status: 'in-progress' | 'delivered' | 'paid';
-  progressStep: number;
-  items: OrderItem[];
-  total: number;
-  deliveryCharge: number;
-  serviceTax: number;
+  order_number: string;
+  status: OrderStatus;
+  payment_status: string;
+  total_amount: number;
+  subtotal: number;
+  delivery_charge: number;
+  service_tax: number;
+  delivery_name: string;
+  delivery_address: string;
+  delivery_city_state: string;
+  delivery_pin: string;
+  created_at: string;
+  order_items: OrderItem[];
 }
 
-const sampleOrders: Order[] = [
-  {
-    id: '1',
-    dateTime: '01/07/20 12:30 PM',
-    type: 'status',
-    status: 'in-progress',
-    progressStep: 2,
-    items: [
-      { sNo: 1, name: 'Idly', quantity: 2, price: 50.00, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Dosa', quantity: 1, price: 70.00, isVeg: true, status: 'Served' },
-      { sNo: 3, name: 'Vada', quantity: 3, price: 40.00, isVeg: true, status: 'In-Queue' },
-      { sNo: 4, name: 'Pongal', quantity: 1, price: 60.00, isVeg: true, status: 'In-Queue' },
-      { sNo: 5, name: 'Upma', quantity: 2, price: 45.00, isVeg: true, status: 'In-Queue' },
-    ],
-    total: 495.00,
-    deliveryCharge: 10.00,
-    serviceTax: 24.75,
-  },
-  {
-    id: '2',
-    dateTime: '01/07/20 10:30 AM',
-    type: 'status',
-    status: 'delivered',
-    progressStep: 4,
-    items: [
-      { sNo: 1, name: 'Masala Dosa', quantity: 2, price: 80.00, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Filter Coffee', quantity: 2, price: 30.00, isVeg: true, status: 'Served' },
-      { sNo: 3, name: 'Kesari Bath', quantity: 1, price: 50.00, isVeg: true, status: 'Served' },
-    ],
-    total: 270.00,
-    deliveryCharge: 10.00,
-    serviceTax: 13.50,
-  },
-  {
-    id: '3',
-    dateTime: '01/07/20 9:00 AM',
-    type: 'invoice',
-    status: 'in-progress',
-    progressStep: 4,
-    items: [
-      { sNo: 1, name: 'Rava Idly', quantity: 4, price: 60.00, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Sambar Vada', quantity: 2, price: 55.00, isVeg: true, status: 'In-Queue' },
-      { sNo: 3, name: 'Puri Bhaji', quantity: 1, price: 65.00, isVeg: true, status: 'Served' },
-      { sNo: 4, name: 'Badam Milk', quantity: 2, price: 45.00, isVeg: true, status: 'In-Queue' },
-    ],
-    total: 465.00,
-    deliveryCharge: 10.00,
-    serviceTax: 23.25,
-  },
-  {
-    id: '4',
-    dateTime: '30/06/20 8:30 PM',
-    type: 'invoice',
-    status: 'paid',
-    progressStep: 4,
-    items: [
-      { sNo: 1, name: 'Thali Special', quantity: 2, price: 150.00, isVeg: true, status: 'Served' },
-      { sNo: 2, name: 'Butter Naan', quantity: 4, price: 35.00, isVeg: true, status: 'Served' },
-      { sNo: 3, name: 'Paneer Butter Masala', quantity: 1, price: 180.00, isVeg: true, status: 'Served' },
-      { sNo: 4, name: 'Gulab Jamun', quantity: 4, price: 30.00, isVeg: true, status: 'Served' },
-    ],
-    total: 740.00,
-    deliveryCharge: 10.00,
-    serviceTax: 37.00,
-  },
+const statusSteps: { status: OrderStatus; label: string; icon: React.ReactNode }[] = [
+  { status: 'pending', label: 'Placed', icon: <Package size={14} /> },
+  { status: 'confirmed', label: 'Confirmed', icon: <Check size={14} /> },
+  { status: 'preparing', label: 'Preparing', icon: <ChefHat size={14} /> },
+  { status: 'ready', label: 'Ready', icon: <Package size={14} /> },
+  { status: 'out_for_delivery', label: 'On The Way', icon: <Truck size={14} /> },
+  { status: 'delivered', label: 'Delivered', icon: <Check size={14} /> },
 ];
 
-const timelineSteps = [
-  { id: 0, label: 'Placed' },
-  { id: 1, label: 'Prepared' },
-  { id: 2, label: 'Picked up' },
-  { id: 3, label: 'On The Way' },
-  { id: 4, label: 'Delivered' },
-];
+const getStatusIndex = (status: OrderStatus): number => {
+  const index = statusSteps.findIndex(s => s.status === status);
+  return index >= 0 ? index : 0;
+};
 
-const ProgressTimeline = ({ step }: { step: number }) => {
+const ProgressTimeline = ({ currentStatus }: { currentStatus: OrderStatus }) => {
+  const currentIndex = getStatusIndex(currentStatus);
+  
   return (
     <div className="mb-8 px-4">
       <div className="relative flex items-center justify-between">
         {/* Progress Line Background */}
-        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-muted rounded-full" />
+        <div className="absolute left-0 right-0 top-4 h-1 bg-muted rounded-full" />
         
         {/* Progress Line Filled */}
         <div 
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500"
-          style={{ width: `${(step / 4) * 100}%` }}
+          className="absolute left-0 top-4 h-1 bg-primary rounded-full transition-all duration-500"
+          style={{ width: `${(currentIndex / (statusSteps.length - 1)) * 100}%` }}
         />
         
         {/* Timeline Steps */}
-        {timelineSteps.map((s, index) => (
-          <div key={s.id} className="relative z-10 flex flex-col items-center">
-            <div 
-              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                step >= index 
-                  ? 'bg-primary border-primary text-primary-foreground' 
-                  : 'bg-background border-muted-foreground/50 text-muted-foreground'
-              }`}
-            >
-              {step > index ? (
-                <Check size={16} className="text-primary-foreground" />
-              ) : (
-                <span className="text-xs font-semibold">{index + 1}</span>
-              )}
+        {statusSteps.map((step, index) => {
+          const isCompleted = index <= currentIndex;
+          const isCurrent = index === currentIndex;
+          
+          return (
+            <div key={step.status} className="relative z-10 flex flex-col items-center">
+              <div 
+                className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                  isCompleted 
+                    ? 'bg-primary border-primary text-primary-foreground' 
+                    : 'bg-background border-muted-foreground/50 text-muted-foreground'
+                }`}
+              >
+                {isCompleted ? <Check size={14} /> : step.icon}
+              </div>
+              <span className={`mt-2 text-xs font-medium text-center max-w-[50px] ${
+                isCurrent ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
+              }`}>
+                {step.label}
+              </span>
             </div>
-            <span className={`mt-2 text-xs font-medium ${
-              step >= index ? 'text-foreground' : 'text-muted-foreground'
-            }`}>
-              {s.label}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 };
 
-const StatusBadge = ({ status }: { status: 'Served' | 'In-Queue' }) => (
-  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-    status === 'Served' 
-      ? 'bg-green-100 text-green-700' 
-      : 'bg-amber-100 text-amber-700'
-  }`}>
-    {status}
-  </span>
-);
+const StatusBadge = ({ status }: { status: OrderStatus }) => {
+  const statusStyles: Record<OrderStatus, string> = {
+    pending: 'bg-amber-100 text-amber-800',
+    confirmed: 'bg-blue-100 text-blue-800',
+    preparing: 'bg-purple-100 text-purple-800',
+    ready: 'bg-cyan-100 text-cyan-800',
+    out_for_delivery: 'bg-orange-100 text-orange-800',
+    delivered: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+  };
+  
+  const statusLabels: Record<OrderStatus, string> = {
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    preparing: 'Preparing',
+    ready: 'Ready',
+    out_for_delivery: 'Out for Delivery',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
+  };
+  
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status]}`}>
+      {statusLabels[status]}
+    </span>
+  );
+};
 
 const OrderCard = ({ order }: { order: Order }) => {
-  const showPaidStamp = order.type === 'invoice' && order.status === 'paid';
-  const showDeliveredStamp = order.type === 'status' && order.status === 'delivered';
-  const totalCost = order.total + order.deliveryCharge + order.serviceTax;
-
+  const showPaidStamp = order.payment_status === 'paid';
+  const showDeliveredStamp = order.status === 'delivered';
+  
   return (
     <div className="bg-background border border-border rounded-2xl shadow-sm mb-6 overflow-hidden">
       {/* Date/Time Header */}
-      <div className="px-6 py-3 text-sm text-muted-foreground bg-muted/30 border-b border-border/50">
-        {order.dateTime}
+      <div className="px-6 py-3 text-sm text-muted-foreground bg-muted/30 border-b border-border/50 flex items-center justify-between">
+        <span className="flex items-center gap-1">
+          <Clock size={14} />
+          {new Date(order.created_at).toLocaleString()}
+        </span>
+        <StatusBadge status={order.status} />
       </div>
 
       {/* Order Content */}
       <div className="p-6 relative">
         {/* Title */}
-        <h3 className="text-xl font-bold text-center mb-6 text-foreground">
-          {order.type === 'invoice' ? 'Invoice' : 'Order Status'}
+        <h3 className="text-lg font-bold text-center mb-4 text-foreground">
+          {order.order_number}
         </h3>
 
-        {/* Progress Timeline - Only for status type */}
-        {order.type === 'status' && (
-          <ProgressTimeline step={order.progressStep} />
+        {/* Progress Timeline */}
+        {order.status !== 'cancelled' && (
+          <ProgressTimeline currentStatus={order.status} />
         )}
 
         {/* Items Table */}
@@ -183,8 +155,8 @@ const OrderCard = ({ order }: { order: Order }) => {
           {(showPaidStamp || showDeliveredStamp) && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
               <img 
-                src={showPaidStamp ? stampPaid : stampDelivered}
-                alt={showPaidStamp ? 'Paid' : 'Delivered'}
+                src={showDeliveredStamp ? stampDelivered : stampPaid}
+                alt={showDeliveredStamp ? 'Delivered' : 'Paid'}
                 className="w-40 h-40 object-contain transform rotate-[-20deg] opacity-80"
               />
             </div>
@@ -193,30 +165,26 @@ const OrderCard = ({ order }: { order: Order }) => {
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow className="border-border">
-                <TableHead className="text-foreground font-semibold w-16">S.No</TableHead>
-                <TableHead className="text-foreground font-semibold">Items</TableHead>
-                <TableHead className="text-foreground font-semibold text-center w-24">Qty</TableHead>
+                <TableHead className="text-foreground font-semibold">Item</TableHead>
+                <TableHead className="text-foreground font-semibold text-center w-20">Qty</TableHead>
                 <TableHead className="text-foreground font-semibold text-right w-24">Price</TableHead>
-                <TableHead className="text-foreground font-semibold text-right w-28">Status</TableHead>
+                <TableHead className="text-foreground font-semibold text-right w-24">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.items.map((item) => (
-                <TableRow key={item.sNo} className="border-border/50">
-                  <TableCell className="text-muted-foreground font-medium">{item.sNo}</TableCell>
+              {order.order_items.map((item) => (
+                <TableRow key={item.id} className="border-border/50">
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 border-2 ${item.isVeg ? 'border-green-600' : 'border-red-600'} rounded-sm flex items-center justify-center`}>
-                        <div className={`w-2 h-2 ${item.isVeg ? 'bg-green-600' : 'bg-red-600'} rounded-full`} />
+                      <div className={`w-4 h-4 border-2 ${item.is_veg ? 'border-green-600' : 'border-red-600'} rounded-sm flex items-center justify-center`}>
+                        <div className={`w-2 h-2 ${item.is_veg ? 'bg-green-600' : 'bg-red-600'} rounded-full`} />
                       </div>
-                      <span className="text-foreground font-medium">{item.name}</span>
+                      <span className="text-foreground font-medium">{item.item_name}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-center text-muted-foreground">{item.quantity}</TableCell>
-                  <TableCell className="text-right text-foreground font-medium">₹{item.price.toFixed(2)}</TableCell>
-                  <TableCell className="text-right">
-                    <StatusBadge status={item.status} />
-                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">₹{item.item_price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right text-foreground font-medium">₹{(item.item_price * item.quantity).toFixed(2)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -227,23 +195,31 @@ const OrderCard = ({ order }: { order: Order }) => {
         <div className="mt-6 pt-4 border-t border-border space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span className="font-semibold text-foreground">₹{order.total.toFixed(2)}</span>
+            <span className="font-semibold text-foreground">₹{order.subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Delivery charge</span>
-            <span className="font-semibold text-primary">₹{order.deliveryCharge.toFixed(2)}</span>
+            <span className="font-semibold text-primary">₹{order.delivery_charge.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Service Tax / GST</span>
-            <span className="font-semibold text-primary">₹{order.serviceTax.toFixed(2)}</span>
+            <span className="font-semibold text-primary">₹{order.service_tax.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-base pt-3 border-t border-border mt-3">
             <span className="font-bold text-foreground">Total Cost</span>
-            <span className="font-bold text-primary text-lg">₹{totalCost.toFixed(2)}</span>
+            <span className="font-bold text-primary text-lg">₹{order.total_amount.toFixed(2)}</span>
           </div>
         </div>
 
-        {/* Invoice Button */}
+        {/* Delivery Address */}
+        <div className="mt-6 pt-4 border-t border-border">
+          <p className="text-sm text-muted-foreground mb-1">Delivering to:</p>
+          <p className="text-sm font-medium text-foreground">{order.delivery_name}</p>
+          <p className="text-sm text-muted-foreground">{order.delivery_address}</p>
+          <p className="text-sm text-muted-foreground">{order.delivery_city_state} - {order.delivery_pin}</p>
+        </div>
+
+        {/* Download Invoice */}
         <div className="mt-6 flex justify-center">
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 rounded-full shadow-md">
             <Download className="mr-2 h-4 w-4" />
@@ -256,33 +232,94 @@ const OrderCard = ({ order }: { order: Order }) => {
 };
 
 const Orders = () => {
-  const [dateFilter, setDateFilter] = useState('Today');
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { fetchUserOrders } = useOrders();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      if (user) {
+        setLoading(true);
+        const data = await fetchUserOrders();
+        setOrders(data as Order[]);
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    if (!authLoading) {
+      loadOrders();
+    }
+  }, [user, authLoading]);
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <Navbar />
+        <main className="container mx-auto px-4 py-16 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <Navbar />
+        <main className="container mx-auto px-4 py-16 max-w-md text-center">
+          <div className="bg-card rounded-2xl p-8 shadow-sm border border-border">
+            <LogIn className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">Sign in to view orders</h2>
+            <p className="text-muted-foreground mb-6">
+              Please log in to view your order history.
+            </p>
+            <Button
+              onClick={() => navigate('/auth')}
+              className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-medium"
+            >
+              Sign In
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <Navbar />
+        <main className="container mx-auto px-4 py-16 max-w-md text-center">
+          <div className="bg-card rounded-2xl p-8 shadow-sm border border-border">
+            <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-foreground mb-2">No orders yet</h2>
+            <p className="text-muted-foreground mb-6">
+              Start ordering delicious food from our menu!
+            </p>
+            <Button
+              onClick={() => navigate('/menu')}
+              className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-medium"
+            >
+              Browse Menu
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 pb-24 md:pb-8">
       <Navbar />
-
-      {/* Date Navigation */}
-      <div className="bg-background border-b border-border shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-4">
-            <button className="p-2 hover:bg-muted rounded-full transition-colors">
-              <ChevronLeft className="h-5 w-5 text-muted-foreground" />
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-semibold text-foreground">{dateFilter}</span>
-              <span className="text-sm text-muted-foreground px-3 py-1 bg-muted rounded-full">in Week</span>
-            </div>
-            <button className="p-2 hover:bg-muted rounded-full transition-colors">
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Orders List */}
       <div className="container mx-auto px-4 py-6 max-w-2xl">
-        {sampleOrders.map((order) => (
+        <h1 className="text-2xl font-bold text-foreground mb-6">Your Orders</h1>
+        {orders.map((order) => (
           <OrderCard key={order.id} order={order} />
         ))}
       </div>
